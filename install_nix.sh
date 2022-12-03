@@ -11,10 +11,7 @@ partition_disk() {
     sudo sgdisk --zap-all "$disk"
     # EFI
     sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$disk"
-    # Boot
-    sudo sgdisk --new=2:0:+4G --typecode=2:BE00 "$disk"
-    # Root
-    sudo sgdisk --new=3:0:0 --typecode=3:BF00 "$disk"
+
     # BIOS Boot
     sudo sgdisk --set-alignment=1 --new=5:24k:+1000k --typecode=5:EF02
 }
@@ -47,14 +44,14 @@ format_efi() {
     sudo mount -t vfat "${disk}-part1" "/mnt/boot/efis/${disk##*/}-part1"
 }
 
-exit 0
-
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 cd "$SCRIPT_DIR" || exit 1
 
 sudo apt update
 sudo apt install -y dosfstools zfs-dkms zfsutils-linux whois python3 python3-pip
 sudo pip install jinja2-cli
+
+exit 0
 
 sudo -i nix-channel --update
 sudo -i nix-env -iA nixpkgs.nix nixpkgs.nixos-install-tools
@@ -72,40 +69,25 @@ partition_disk "$nix_disk"
 # Remove swap
 sudo swapoff -a
 sudo sed -i '/.*swap.*/d' /etc/fstab
-sudo sgdisk --delete=5 "$live_disk"
+sudo sgdisk --delete=5 "$live_disk" && sudo partx -u /dev/sda5
 
-partprobe
+sudo umount /boot/efi
+sudo umount /boot
+sudo umount /empty
+sudo sgdisk --delete=1 "$live_disk" && sudo partx -u /dev/sda1
+sudo sgdisk --delete=2 "$live_disk" && sudo partx -u /dev/sda2
+sudo sgdisk --delete=3 "$live_disk" && sudo partx -u /dev/sda3
 
-# sudo umount /boot/efi
-# sudo umount /boot
-# sudo umount /empty
-# sudo sgdisk --delete=1 "$live_disk"
-# sudo sgdisk --delete=2 "$live_disk"
-# sudo sgdisk --delete=3 "$live_disk"
-# sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$live_disk"
-# sudo sgdisk --new=2:0:+4G --typecode=2:BE00 "$live_disk"
+# EFI/Boot partitions
+sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$live_disk" && sudo partx -u /dev/sda1
+sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$nix_disk"
+
+# ZFS Root partition
+sudo sgdisk --new=3:0:0 --typecode=3:BF00 "$nix_disk"
 
 sleep 5
 
 set -e
-# Create boot pool
-sudo zpool create \
-    -o compatibility=grub2 \
-    -o ashift=12 \
-    -o autotrim=on \
-    -O acltype=posixacl \
-    -O canmount=off \
-    -O compression=lz4 \
-    -O devices=off \
-    -O normalization=formD \
-    -O relatime=on \
-    -O xattr=sa \
-    -O mountpoint=/boot \
-    -R /mnt \
-    -f \
-    bpool \
-    "$nix_disk-part2"
-
 # Create root pool
 sudo zpool create \
     -o ashift=12 \
@@ -121,7 +103,7 @@ sudo zpool create \
     -O mountpoint=/ \
     rpool \
     -f \
-    "$nix_disk-part3"
+    "$nix_disk-part2"
 
 # Create root system container
 sudo zfs create \
@@ -136,11 +118,9 @@ sudo zfs create -o canmount=off -o mountpoint=/var rpool/nixos/var
 sudo zfs create -o canmount=on rpool/nixos/var/lib
 sudo zfs create -o canmount=on rpool/nixos/var/log
 
-# Create boot dataset
-sudo zfs create -o canmount=off -o mountpoint=none bpool/nixos
-sudo zfs create -o canmount=on -o mountpoint=/boot bpool/nixos/root
-
-format_efi "$nix_disk"
+# Create and mount ESP partitions
+sudo mkfs.vfat "$nix_disk-part1"
+sudo mkfs.vfat "$live_disk-part1"
 
 sudo mkdir -p /mnt/etc/zfs/
 sudo rm -f /mnt/etc/zfs/zpool.cache
