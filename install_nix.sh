@@ -15,6 +15,8 @@ partition_disk() {
     sudo sgdisk --new=2:0:+4G --typecode=2:BE00 "$disk"
     # Root
     sudo sgdisk --new=3:0:0 --typecode=3:BF00 "$disk"
+    # BIOS Boot
+    sudo sgdisk --set-alignment=1 --new=5:24k:+1000k --typecode=5:EF02
 }
 
 find_disk() {
@@ -44,6 +46,8 @@ format_efi() {
     sudo mkdir -p "/mnt/boot/efis/${disk##*/}-part1"
     sudo mount -t vfat "${disk}-part1" "/mnt/boot/efis/${disk##*/}-part1"
 }
+
+exit 0
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 cd "$SCRIPT_DIR" || exit 1
@@ -145,7 +149,8 @@ sudo chmod a-w /mnt/etc/zfs/zpool.cache
 sudo chattr +i /mnt/etc/zfs/zpool.cache
 sudo -i nixos-generate-config --root /mnt
 
-NIX_HASHED_PASSWORD=$(mkpasswd -m SHA-512 -s)
+password=$(openssl rand -base64 12)
+NIX_HASHED_PASSWORD=$(mkpasswd -m SHA-512 "$password")
 NIX_GRUB_DEVICES="$nix_disk"
 NIX_HOSTID="$(head -c 8 /etc/machine-id)"
 NIX_HOSTNAME=$(hostname)
@@ -160,3 +165,5 @@ export \
 
 sudo -E python3 template.py zfs.nix.j2 /mnt/etc/nixos/zfs.nix
 sudo -E python3 template.py configuration.nix.j2 /mnt/etc/nixos/configuration.nix
+sudo -i sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount.mkdir" ];|g' /mnt/etc/nixos/hardware-configuration.nix
+sudo -i nixos-install -v --show-trace --no-root-passwd --root /mnt

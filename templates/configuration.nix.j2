@@ -11,8 +11,6 @@
       ./zfs.nix
     ];
 
-  boot.loader.systemd-boot.enable = true;
-
   networking =
     {
       hostName = "{{ NIX_HOSTNAME }}";
