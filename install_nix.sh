@@ -5,17 +5,6 @@ error() {
     exit 1
 }
 
-partition_disk() {
-    local disk
-    disk=$1
-    sudo sgdisk --zap-all "$disk"
-    # EFI
-    sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$disk"
-
-    # BIOS Boot
-    sudo sgdisk --set-alignment=1 --new=5:24k:+1000k --typecode=5:EF02
-}
-
 find_disk() {
     local real_path
     real_path=$1
@@ -51,10 +40,10 @@ sudo apt update
 sudo apt install -y dosfstools zfs-dkms zfsutils-linux whois python3 python3-pip
 sudo pip install jinja2-cli
 
-exit 0
-
 sudo -i nix-channel --update
 sudo -i nix-env -iA nixpkgs.nix nixpkgs.nixos-install-tools
+
+exit 0
 
 # Load zfs kernel module
 sudo /sbin/modprobe zfs
@@ -64,16 +53,15 @@ live_disk="$(find_disk '/dev/sda')"
 
 # Wipe disk
 sudo wipefs -a "$nix_disk"
-partition_disk "$nix_disk"
 
 # Remove swap
 sudo swapoff -a
 sudo sed -i '/.*swap.*/d' /etc/fstab
 sudo sgdisk --delete=5 "$live_disk" && sudo partx -u /dev/sda5
 
-sudo umount /boot/efi
-sudo umount /boot
-sudo umount /empty
+sudo umount -f /boot/efi
+sudo umount -f /boot
+sudo umount -f /empty
 sudo sgdisk --delete=1 "$live_disk" && sudo partx -u /dev/sda1
 sudo sgdisk --delete=2 "$live_disk" && sudo partx -u /dev/sda2
 sudo sgdisk --delete=3 "$live_disk" && sudo partx -u /dev/sda3
@@ -83,7 +71,7 @@ sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$live_disk" && sudo partx -u /dev/
 sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$nix_disk"
 
 # ZFS Root partition
-sudo sgdisk --new=3:0:0 --typecode=3:BF00 "$nix_disk"
+sudo sgdisk --new=2:0:0 --typecode=2:BF00 "$nix_disk"
 
 sleep 5
 
