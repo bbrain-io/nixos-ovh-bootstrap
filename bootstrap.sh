@@ -12,7 +12,10 @@ error() {
 create_user() {
     useradd -m "$BOOTSTRAP_USER" -G sudo -s /bin/bash
     mkdir -p /home/$BOOTSTRAP_USER/.ssh
-    curl -L https://github.com/joscherrer.keys >>/home/$BOOTSTRAP_USER/.ssh/authorized_keys
+
+    authorized_key=$(curl -L https://github.com/joscherrer.keys)
+    grep "$authorized_key" /home/$BOOTSTRAP_USER/.ssh/authorized_keys ||
+        echo "$authorized_key" >>/home/$BOOTSTRAP_USER/.ssh/authorized_keys
     echo "$BOOTSTRAP_USER    ALL=(ALL) NOPASSWD: ALL" >/etc/sudoers.d/$BOOTSTRAP_USER
 }
 
