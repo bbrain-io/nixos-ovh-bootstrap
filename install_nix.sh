@@ -37,7 +37,8 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 cd "$SCRIPT_DIR" || exit 1
 
 sudo apt update
-sudo apt install -y dosfstools zfs-dkms zfsutils-linux whois python3 python3-pip
+export DEBIAN_FRONTEND=noninteractive
+sudo apt install -yqq dosfstools zfs-dkms zfsutils-linux whois python3 python3-pip
 sudo pip install jinja2-cli
 
 sudo -i nix-channel --update
