@@ -11,10 +11,13 @@ let
     gptfdisk
     efibootmgr
   ];
-  packagesPython = with pkgs; [
-    python310Full
-    python310Packages.pip
-    python310Packages.jinja2
+  packagesPython = ps: with ps; [
+    pip
+    jinja2
+    requests
+  ];
+  pythonWithPackages = with pkgs; [
+    (python3.withPackages (packagesPython))
   ];
 in
 {
@@ -29,7 +32,7 @@ in
 
   environment.systemPackages = with pkgs;
     pachagesBase
-    ++ packagesPython;
+    ++ pythonWithPackages;
 
 
   services.openssh.enable = true;
