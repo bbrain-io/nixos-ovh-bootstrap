@@ -38,7 +38,7 @@ cd "$SCRIPT_DIR" || exit 1
 
 sudo apt update
 export DEBIAN_FRONTEND=noninteractive
-sudo apt install -yqq dosfstools zfs-dkms zfsutils-linux whois python3 python3-pip
+sudo -E apt install -yqq dosfstools zfs-dkms zfsutils-linux whois python3 python3-pip
 sudo pip install jinja2-cli
 
 sudo -i nix-channel --update
