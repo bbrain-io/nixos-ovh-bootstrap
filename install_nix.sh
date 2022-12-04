@@ -53,6 +53,10 @@ live_disk="$(find_disk '/dev/sda')"
 # Wipe disk
 sudo wipefs -a "$nix_disk"
 
+# Clear zfs labels on both disks
+sudo zpool labelclear -f "$nix_disk"
+sudo zpool labelclear -f "$live_disk"
+
 # Remove swap
 sudo swapoff -a
 sudo sed -i '/.*swap.*/d' /etc/fstab
@@ -126,5 +130,5 @@ export \
 sudo -E python3 gen_conf.py --path /mnt/etc/nixos
 sudo -i sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount.mkdir" ];|g' /mnt/etc/nixos/hardware-configuration.nix
 sudo -i nixos-install -v --show-trace --no-root-passwd --root /mnt
-
+bootmgr_disk=$(echo "$nix_disk" | awk -F_ '{print $NF}')
 exit 0
