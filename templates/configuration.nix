@@ -46,5 +46,5 @@ in
     { users = [ "jscherrer" ]; commands = [{ command = "ALL"; options = [ "NOPASSWD" ]; }]; }
   ];
 
-  system.stateVersion = "23.05";
+  system.stateVersion = "22.11";
 }
