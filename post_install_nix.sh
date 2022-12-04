@@ -1,5 +1,10 @@
 #!/bin/bash
 
+error() {
+    printf "%s\n" "$*" >&2
+    exit 1
+}
+
 find_disk() {
     local real_path
     real_path=$1
@@ -23,7 +28,7 @@ find_disk() {
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 cd "$SCRIPT_DIR" || exit 1
 
-nix_disk_uuid="$(grep '/boot' /etc/fstab | awk '{print $1}')"
+nix_disk_uuid="$(grep '/boot ' /etc/fstab | awk '{print $1}')"
 nix_disk_dev=$(readlink -f "$nix_disk_uuid" | sed 's/\(.*sd.\)./\1/')
 
 if [ "$nix_disk_dev" == "/dev/sda" ]; then
@@ -66,3 +71,4 @@ sudo -i sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount
 sudo zpool attach rpool "$nix_disk-part2" "$old_disk-part2"
 sudo zpool wait -t resilver rpool
 sudo -i nixos-rebuild --show-trace --install-bootloader switch
+sudo efibootmgr -c -d "$old_disk" -p 1 -l '\EFI\NixOS-boot-fallback\grubx64.efi' -L NixOS-boot-fallback
