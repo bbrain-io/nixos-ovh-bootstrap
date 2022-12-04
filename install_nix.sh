@@ -99,6 +99,7 @@ sudo zfs create -o canmount=on rpool/nixos/var/log
 
 # Create and mount ESP partitions
 sudo mkfs.vfat "$nix_disk-part1"
+sudo mkdir -p /mnt/boot
 sudo mount "$nix_disk-part1" /mnt/boot
 
 sudo mkdir -p /mnt/etc/zfs/
