@@ -129,6 +129,6 @@ export \
 
 sudo -E python3 gen_conf.py --path /mnt/etc/nixos
 sudo -i sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount.mkdir" ];|g' /mnt/etc/nixos/hardware-configuration.nix
-sudo -i nixos-install -v --show-trace --no-root-passwd --root /mnt
-bootmgr_disk=$(echo "$nix_disk" | awk -F_ '{print $NF}')
+# sudo -i nixos-install -v --show-trace --no-root-passwd --root /mnt
+# bootmgr_disk=$(echo "$nix_disk" | awk -F_ '{print $NF}')
 exit 0
