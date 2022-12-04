@@ -23,8 +23,17 @@ find_disk() {
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 cd "$SCRIPT_DIR" || exit 1
 
-old_disk="$(find_disk '/dev/sdb')"
-nix_disk="$(find_disk '/dev/sda')"
+nix_disk_uuid="$(grep '/boot' /etc/fstab | awk '{print $1}')"
+nix_disk_dev=$(readlink -f "$nix_disk_uuid" | sed 's/\(.*sd.\)./\1/')
+
+if [ "$nix_disk_dev" == "/dev/sda" ]; then
+    old_disk_dev="/dev/sdb"
+else
+    old_disk_dev="/dev/sda"
+fi
+
+old_disk="$(find_disk "$old_disk_dev")"
+nix_disk="$(find_disk "$nix_disk_dev")"
 
 sudo sfdisk --delete "$old_disk"
 sudo wipefs -a "$old_disk"
@@ -54,5 +63,6 @@ sudo -E python3 gen_conf.py --path /etc/nixos --template configuration.nix
 sudo -i nixos-generate-config
 sudo -i sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount.mkdir" ];|g' /etc/nixos/hardware-configuration.nix
 
-sudo zpool attach rpool "$nix_disk" "$old_disk"
+sudo zpool attach rpool "$nix_disk-part2" "$old_disk-part2"
+sudo zpool wait -t resilver rpool
 sudo -i nixos-rebuild --show-trace --install-bootloader switch
