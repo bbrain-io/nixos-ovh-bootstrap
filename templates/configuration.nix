@@ -12,7 +12,7 @@ let
     efibootmgr
   ];
   packagesPython = with pkgs; [
-    python310
+    python310Full
     python310Packages.pip
     python310Packages.jinja2
   ];
