@@ -1,0 +1,13 @@
+{ config, pkgs, ... }:
+
+{
+  networking =
+    {
+      hostId = "{{ NIX_HOSTID }}";
+      hostName = "{{ NIX_HOSTNAME }}";
+      domain = "{{ NIX_DOMAIN }}";
+    };
+
+  users.users.jscherrer.initialHashedPassword = "{{ NIX_HASHED_PASSWORD }}";
+  users.users.root.initialHashedPassword = "{{ NIX_HASHED_PASSWORD }}";
+}

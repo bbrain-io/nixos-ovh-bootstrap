@@ -43,8 +43,6 @@ sudo pip install jinja2-cli
 sudo -i nix-channel --update
 sudo -i nix-env -iA nixpkgs.nix nixpkgs.nixos-install-tools
 
-exit 0
-
 # Load zfs kernel module
 sudo /sbin/modprobe zfs
 
@@ -59,15 +57,7 @@ sudo swapoff -a
 sudo sed -i '/.*swap.*/d' /etc/fstab
 sudo sgdisk --delete=5 "$live_disk" && sudo partx -u /dev/sda5
 
-sudo umount -f /boot/efi
-sudo umount -f /boot
-sudo umount -f /empty
-sudo sgdisk --delete=1 "$live_disk" && sudo partx -u /dev/sda1
-sudo sgdisk --delete=2 "$live_disk" && sudo partx -u /dev/sda2
-sudo sgdisk --delete=3 "$live_disk" && sudo partx -u /dev/sda3
-
 # EFI/Boot partitions
-sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$live_disk" && sudo partx -u /dev/sda1
 sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$nix_disk"
 
 # ZFS Root partition
@@ -108,7 +98,7 @@ sudo zfs create -o canmount=on rpool/nixos/var/log
 
 # Create and mount ESP partitions
 sudo mkfs.vfat "$nix_disk-part1"
-sudo mkfs.vfat "$live_disk-part1"
+sudo mount "$nix_disk-part1" /mnt/boot
 
 sudo mkdir -p /mnt/etc/zfs/
 sudo rm -f /mnt/etc/zfs/zpool.cache
@@ -131,7 +121,8 @@ export \
     NIX_HOSTNAME \
     NIX_DOMAIN
 
-sudo -E python3 template.py zfs.nix.j2 /mnt/etc/nixos/zfs.nix
-sudo -E python3 template.py configuration.nix.j2 /mnt/etc/nixos/configuration.nix
+sudo -E python3 gen_conf.py --path /mnt/etc/nixos
 sudo -i sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount.mkdir" ];|g' /mnt/etc/nixos/hardware-configuration.nix
 sudo -i nixos-install -v --show-trace --no-root-passwd --root /mnt
+
+exit 0
