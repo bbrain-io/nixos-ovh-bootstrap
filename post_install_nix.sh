@@ -52,6 +52,7 @@ sudo -E python3 gen_conf.py --path /etc/nixos --template zfs.nix.j2
 sudo -E python3 gen_conf.py --path /etc/nixos --template configuration.nix
 
 sudo -i nixos-generate-config
+sudo -i sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount.mkdir" ];|g' /etc/nixos/hardware-configuration.nix
 
 sudo zpool attach rpool "$nix_disk" "$old_disk"
 sudo -i nixos-rebuild --show-trace --install-bootloader switch
