@@ -1,13 +1,17 @@
 { config, pkgs, ... }:
 
 let
-  pachagesBase = [
+  pachagesBase = with pkgs; [
     vim
+    git
+    zsh
     curl
+    yadm
     rsync
     gptfdisk
+    efibootmgr
   ];
-  packagesPython = [
+  packagesPython = with pkgs; [
     python310
     python310Packages.pip
     python310Packages.jinja2
@@ -25,7 +29,7 @@ in
 
   environment.systemPackages = with pkgs;
     pachagesBase
-    ++ pythonSystemPackages;
+    ++ packagesPython;
 
 
   services.openssh.enable = true;

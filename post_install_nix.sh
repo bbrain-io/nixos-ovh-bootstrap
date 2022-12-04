@@ -26,16 +26,19 @@ cd "$SCRIPT_DIR" || exit 1
 old_disk="$(find_disk '/dev/sdb')"
 nix_disk="$(find_disk '/dev/sda')"
 
+sudo sfdisk --delete "$old_disk"
 sudo wipefs -a "$old_disk"
 
 # EFI/Boot partitions
 sudo sgdisk --new=1:1M:+1G --typecode=1:EF00 "$old_disk"
 
 # ZFS Root partition
-sudo sgdisk --new=2:0:0 --typecode=2:BF00 "$nix_disk"
+sudo sgdisk --new=2:0:0 --typecode=2:BF00 "$old_disk"
 
 # Create and mount ESP partition
 sudo mkfs.vfat "$old_disk-part1"
+sleep 2
+sudo mkdir -p /boot-fallback
 sudo mount "$old_disk-part1" /boot-fallback
 
 NIX_GRUB_DEVICES="$old_disk $nix_disk"
@@ -43,3 +46,7 @@ export NIX_GRUB_DEVICES
 
 sudo -E python3 gen_conf.py --path /etc/nixos --template zfs.nix.j2
 sudo -E python3 gen_conf.py --path /etc/nixos --template configuration.nix
+sudo -i nixos-generate-config
+
+sudo zpool attach rpool "$nix_disk" "$old_disk"
+sudo -i nixos-rebuild --show-trace --install-bootloader switch
