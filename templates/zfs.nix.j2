@@ -5,7 +5,7 @@
 
   boot.kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
 
-  boot.loader.efi.canTouchEfiVariables = false;
+  boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.generationsDir.copyKernels = true;
 
   boot.loader.grub.enable = true;
@@ -14,11 +14,12 @@
   boot.loader.grub.device = "nodev";
   boot.loader.grub.mirroredBoots = [
   {% set devices = NIX_GRUB_DEVICES.split() %}
-  {% set paths = ["/boot", "/boot-fallback"] %}
+  {% set paths = ["boot", "boot-fallback"] %}
   {% for device in devices %}
     {
       devices = [ "{{ device }}" ];
-      path = "{{ paths[loop.index0] }}";
+      path = "/{{ paths[loop.index0] }}";
+      efiBootloaderId = "NixOS-{{ paths[loop.index0] }}";
     }
   {% endfor %}
   ];

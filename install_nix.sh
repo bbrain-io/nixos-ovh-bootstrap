@@ -41,6 +41,7 @@ export DEBIAN_FRONTEND=noninteractive
 sudo -E apt install -yqq dosfstools zfs-dkms zfsutils-linux whois python3 python3-pip
 sudo pip install jinja2-cli
 
+sudo -i nix-channel --add https://nixos.org/channels/nixos-22.11 nixos
 sudo -i nix-channel --update
 sudo -i nix-env -iA nixpkgs.nix nixpkgs.nixos-install-tools
 
@@ -129,6 +130,5 @@ export \
 
 sudo -E python3 gen_conf.py --path /mnt/etc/nixos
 sudo -i sed -i 's|fsType = "zfs";|fsType = "zfs"; options = [ "zfsutil" "X-mount.mkdir" ];|g' /mnt/etc/nixos/hardware-configuration.nix
-# sudo -i nixos-install -v --show-trace --no-root-passwd --root /mnt
-# bootmgr_disk=$(echo "$nix_disk" | awk -F_ '{print $NF}')
+sudo -i nixos-install -v --show-trace --no-root-passwd --root /mnt
 exit 0

@@ -41,11 +41,14 @@ sleep 2
 sudo mkdir -p /boot-fallback
 sudo mount "$old_disk-part1" /boot-fallback
 
-NIX_GRUB_DEVICES="$old_disk $nix_disk"
+NIX_GRUB_DEVICES="$nix_disk $old_disk"
 export NIX_GRUB_DEVICES
 
 sudo -E python3 gen_conf.py --path /etc/nixos --template zfs.nix.j2
 sudo -E python3 gen_conf.py --path /etc/nixos --template configuration.nix
+
+sudo -i nix-channel --add https://nixos.org/channels/nixos-22.11 nixos
+sudo -i nix-channel --update
 sudo -i nixos-generate-config
 
 sudo zpool attach rpool "$nix_disk" "$old_disk"
