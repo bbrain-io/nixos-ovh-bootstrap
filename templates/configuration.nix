@@ -1,7 +1,7 @@
 { config, pkgs, ... }:
 
 let
-  pachagesBase = with pkgs; [
+  packagesBase = with pkgs; [
     vim
     git
     zsh
@@ -31,7 +31,7 @@ in
   networking.useDHCP = true;
 
   environment.systemPackages = with pkgs;
-    pachagesBase
+    packagesBase
     ++ pythonWithPackages;
 
 
